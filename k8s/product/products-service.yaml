@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: products-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: products-service
+  ports:
+  - port: 3002
+    targetPort: 3002

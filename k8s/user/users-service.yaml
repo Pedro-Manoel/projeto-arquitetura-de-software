@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: users-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: users-service
+  ports:
+  - port: 3001
+    targetPort: 3001

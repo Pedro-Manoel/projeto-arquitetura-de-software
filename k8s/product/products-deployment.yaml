@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: products-service-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: products-service
+  template:
+    metadata:
+      labels:
+        app: products-service
+    spec:
+      containers:
+      - name: products-service
+        image: products-service
+        env:
+        - name: MONGODB_URL
+          value: mongodb://products-db-service:27018/products
+        - name: RABBITMQ_URL
+          value: amqp://rabbitmq-service:5672
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3002
