@@ -4,23 +4,36 @@ const httpProxy = require("http-proxy");
 const proxy = httpProxy.createProxyServer();
 const app = express();
 
+const config = require("./src/config");
+
+function printRequest(path, req) {
+  console.log(`Request to ${path}${req.url === "/" ? "" : req.url}`);
+}
+
+// app.use("/", (_, res) => {
+//   console.log("Request to /");
+//   return res.send("API Gateway");
+// });
+
 // Route requests to the auth service
-app.use("/auth", (req, res) => {
-  proxy.web(req, res, { target: "http://auth:3000" });
+app.use("/api/users", (req, res) => {
+  printRequest("/api/users", req);
+  proxy.web(req, res, { target: config.userServiceUrl });
 });
 
 // Route requests to the product service
-app.use("/products", (req, res) => {
-  proxy.web(req, res, { target: "http://product:3001" });
+app.use("/api/products", (req, res) => {
+  printRequest("/api/products", req);
+  proxy.web(req, res, { target: config.productServiceUrl });
 });
 
 // Route requests to the order service
-app.use("/orders", (req, res) => {
-  proxy.web(req, res, { target: "http://order:3002" });
+app.use("/api/orders", (req, res) => {
+  printRequest("/api/orders", req);
+  proxy.web(req, res, { target: config.orderServiceUrl });
 });
 
 // Start the server
-const port = process.env.PORT || 3003;
-app.listen(port, () => {
-  console.log(`API Gateway listening on port ${port}`);
+app.listen(config.port, () => {
+  console.log(`API Gateway on port ${config.port}`);
 });

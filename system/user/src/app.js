@@ -1,11 +1,8 @@
-require("dotenv").config();
-
 const express = require("express");
 const mongoose = require("mongoose");
-
 const config = require("./config");
-const ProductMessageBroker = require("./utils/ProductMessageBroker");
-const ProductRoutes = require("./routes");
+
+const UserRoutes = require("./routes");
 
 class App {
   constructor() {
@@ -14,7 +11,7 @@ class App {
 
   async connectDB() {
     console.log("Connecting to MongoDB...");
-
+    
     await mongoose.connect(config.mongodbUrl, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
@@ -29,25 +26,18 @@ class App {
   }
 
   setRoutes() {
-    this.app.use("/products", ProductRoutes);
-  }
-
-  async setupMessageBroker() {
-    return ProductMessageBroker.connect();
+    this.app.use("/users", UserRoutes);
   }
 
   async setup() {
-    await Promise.all([this.connectDB(), this.setupMessageBroker()]);
+    await this.connectDB();
     this.setMiddlewares();
     this.setRoutes();
   }
 
   async start() {
     await this.setup();
-
-    this.server = this.app.listen(config.port, () =>
-      console.log(`Product service on port ${config.port}`)
-    );
+    this.server = this.app.listen(config.port, () => console.log(`User service on port ${config.port}`));
   }
 }
 

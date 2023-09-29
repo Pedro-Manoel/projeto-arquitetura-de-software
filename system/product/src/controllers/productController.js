@@ -1,83 +1,73 @@
-const Product = require("../models/product");
-const messageBroker = require("../utils/messageBroker");
 const uuid = require('uuid');
 
-/**
- * Class to hold the API implementation for the product services
- */
+const ProductMessageBroker = require("../utils/ProductMessageBroker");
+const Product = require("../models/Product");
+const config = require('../config');
+const ProductService = require('../services/ProductService');
+
 class ProductController {
 
   constructor() {
-    this.createOrder = this.createOrder.bind(this);
-    this.getOrderStatus = this.getOrderStatus.bind(this);
+    this.productService = new ProductService();
     this.ordersMap = new Map();
 
   }
 
-  async createProduct(req, res, next) {
+  async createProduct(req, res) {
     try {
-      const token = req.headers.authorization;
-      if (!token) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
       const product = new Product(req.body);
 
       const validationError = product.validateSync();
+
       if (validationError) {
         return res.status(400).json({ message: validationError.message });
       }
 
-      await product.save({ timeout: 30000 });
+      const createdProduct = await this.productService.createProduct(product);
 
-      res.status(201).json(product);
+      res.status(201).json(createdProduct);
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Server error" });
     }
   }
 
-  async createOrder(req, res, next) {
-    try {
-      const token = req.headers.authorization;
-      if (!token) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-  
+  async createOrder(req, res) {
+    try {  
       const { ids } = req.body;
-      const products = await Product.find({ _id: { $in: ids } });
-  
-      const orderId = uuid.v4(); // Generate a unique order ID
+      const products = await this.productService.getProducts(ids);
+
+      const orderId = uuid.v4();
       this.ordersMap.set(orderId, { 
         status: "pending", 
         products, 
         username: req.user.username
       });
   
-      await messageBroker.publishMessage("orders", {
+      await ProductMessageBroker.publishMessage({
         products,
         username: req.user.username,
-        orderId, // include the order ID in the message to orders queue
+        orderId,
       });
 
-      messageBroker.consumeMessage("products", (data) => {
-        const orderData = JSON.parse(JSON.stringify(data));
-        const { orderId } = orderData;
+      console.log(`Publishing PENDING ORDER with id: ${orderId}`);
+
+      ProductMessageBroker.consumeMessage((data) => {
+        const { orderId } = data;
+        console.log(`Consuming COMPLETE ORDER with id: ${orderId}`);
         const order = this.ordersMap.get(orderId);
         if (order) {
-          // update the order in the map
-          this.ordersMap.set(orderId, { ...order, ...orderData, status: 'completed' });
-          console.log("Updated order:", order);
+          this.ordersMap.set(orderId, { ...order, ...data, status: 'completed' });
         }
       });
   
-      // Long polling until order is completed
       let order = this.ordersMap.get(orderId);
       while (order.status !== 'completed') {
-        await new Promise(resolve => setTimeout(resolve, 1000)); // wait for 1 second before checking status again
+        await new Promise(resolve => setTimeout(resolve, 1000));
         order = this.ordersMap.get(orderId);
       }
   
-      // Once the order is marked as completed, return the complete order details
+      this.ordersMap.delete(orderId);
       return res.status(201).json(order);
     } catch (error) {
       console.error(error);
@@ -86,24 +76,58 @@ class ProductController {
   }
   
 
-  async getOrderStatus(req, res, next) {
-    const { orderId } = req.params;
-    const order = this.ordersMap.get(orderId);
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
-    }
-    return res.status(200).json(order);
-  }
-
-  async getProducts(req, res, next) {
+  async getProducts(_, res, _2) {
     try {
-      const token = req.headers.authorization;
-      if (!token) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-      const products = await Product.find({});
+      const products = await this.productService.getProducts();
 
       res.status(200).json(products);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Server error" });
+    }
+  }
+
+  async getProductById(req, res) {
+    try {
+      const { id } = req.params;
+      const product = await this.productService.getProductById(id);
+
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      res.status(200).json(product);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Server error" });
+    }
+  }
+
+  async healthCheck(_, res) {
+    try {
+      const [mongodbUp, rabbitmqUp] = await Promise.all([
+        this.productService.dbIsConnected(),
+        ProductMessageBroker.isConnected(),
+      ]);
+
+      const status = mongodbUp && rabbitmqUp;
+
+      const healthcheck = {
+        status: status ? "UP" : "DOWN",
+        timestamp: Date.now(),
+        checks: [
+          {
+            name: "MongoDB",
+            status: mongodbUp ? "UP" : "DOWN",
+          },
+          {
+            name: "RabbitMQ",
+            status: rabbitmqUp ? "UP" : "DOWN",
+          }
+        ]
+      };
+
+      res.status(status ? 200 : 400).json(healthcheck);
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Server error" });

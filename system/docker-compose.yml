@@ -1,61 +1,159 @@
 version: "3.8"
 
 services:
-  auth:
-    build: ./auth
+  users-db:
+    image: mongo:4.2
+    container_name: "users-db"
     ports:
-      - "3000:3000"
-    env_file:
-      - ./auth/.env
+      - "27017:27017"
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 30s
+      retries: 3
+    networks:
+      - ecommerce
+
+  products-db:
+    image: mongo:4.2
+    container_name: "products-db"
+    ports:
+      - "27018:27017"
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 30s
+      retries: 3
+    networks:
+      - ecommerce
+
+  orders-db:
+    image: mongo:4.2
+    container_name: "orders-db"
+    ports:
+      - "27019:27017"
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 30s
+      retries: 3
     networks:
       - ecommerce
 
   rabbitmq:
     image: rabbitmq:3.8-management-alpine
-    container_name: 'rabbitmq'
+    container_name: "rabbitmq"
     ports:
-        - 5672:5672
-        - 15672:15672
-    volumes:
-        - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
-        - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
-    networks:
-        - ecommerce
-
-  order:
-    build: ./order
-    ports:
-      - "3002:3002"
-    depends_on:
-      - rabbitmq
-    environment:
-      - RABBITMQ_URL=amqp://rabbitmq:5672
-    env_file:
-      - ./order/.env
+      - 5672:5672
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 30s
+      retries: 3
     networks:
       - ecommerce
 
-  product:
+  users-service:
+    build: ./user
+    ports:
+      - "${USERS_SERVICE_PORT}:${USERS_SERVICE_PORT}"
+    depends_on:
+      users-db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:${USERS_SERVICE_PORT}/users/health",
+        ]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+    environment:
+      - MONGODB_URL=mongodb://users-db:27017
+    env_file:
+      - ./user/.env
+    networks:
+      - ecommerce
+
+  products-service:
     build: ./product
     ports:
-      - "3001:3001"
+      - "${PRODUCTS_SERVICE_PORT}:${PRODUCTS_SERVICE_PORT}"
     depends_on:
-      - rabbitmq
+      products-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:${PRODUCTS_SERVICE_PORT}/products/health",
+        ]
+      interval: 10s
+      timeout: 30s
+      retries: 5
     environment:
+      - MONGODB_URL=mongodb://products-db:27017
       - RABBITMQ_URL=amqp://rabbitmq:5672
     env_file:
       - ./product/.env
     networks:
       - ecommerce
 
+  orders-service:
+    build: ./order
+    ports:
+      - "${ORDERS_SERVICE_PORT}:${ORDERS_SERVICE_PORT}"
+    depends_on:
+      orders-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:${ORDERS_SERVICE_PORT}/orders/health",
+        ]
+      interval: 10s
+      timeout: 30s
+      retries: 5
+    environment:
+      - MONGODB_URL=mongodb://orders-db:27017
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    env_file:
+      - ./order/.env
+    networks:
+      - ecommerce
+
   api-gateway:
     build: ./api-gateway
     ports:
-      - "3003:3003"
+      - "${API_GATEWAY_PORT}:${API_GATEWAY_PORT}"
+    depends_on:
+      users-service:
+        condition: service_healthy
+      products-service:
+        condition: service_healthy
+      orders-service:
+        condition: service_healthy
     environment:
-      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - USER_SERVICE_URL=http://users-service:${USERS_SERVICE_PORT}/users
+      - PRODUCT_SERVICE_URL=http://products-service:${PRODUCTS_SERVICE_PORT}/products
+      - ORDER_SERVICE_URL=http://orders-service:${ORDERS_SERVICE_PORT}/orders
+    env_file:
+      - ./api-gateway/.env
     networks:
       - ecommerce
 
 networks:
   ecommerce:
+    driver: bridge
