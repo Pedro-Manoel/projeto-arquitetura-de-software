@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: users-db-deployment
+spec:
+  selector:
+    matchLabels:
+      app: users-db
+  template:
+    metadata:
+      labels:
+        app: users-db
+    spec:
+      containers:
+      - name: users-db
+        image: mongo:4.2
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "0.05"
+          limits:
+            memory: "2Gi"
+            cpu: "2"
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 27017

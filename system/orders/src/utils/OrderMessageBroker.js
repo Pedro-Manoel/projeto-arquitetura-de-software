@@ -1,0 +1,70 @@
+const amqp = require("amqplib");
+const config = require("../config");
+
+class OrderMessageBroker {
+  constructor() {
+    this.channel = null;
+  }
+
+  async connect() {
+    console.log("Connecting to RabbitMQ...");
+
+    while(this.channel == null) {
+      try {
+        const connection = await amqp.connect(config.rabbitmqUrl);
+        this.channel = await connection.createChannel();
+        
+        await this.channel.assertQueue(config.consumeQueueName);
+        console.log("RabbitMQ connected");
+      } catch (error) {
+        console.log(`RabbitMQ connection error ${error.message}, retrying...`);
+      }
+    }
+  }
+
+  async isConnected() {
+    return this.channel != null;
+  }
+
+  async publishMessage(message) {
+    if (!this.channel) {
+      console.error("No RabbitMQ channel available.");
+      return;
+    }
+
+    try {
+      this.channel.sendToQueue(
+        config.publishQueueName,
+        Buffer.from(JSON.stringify(message))
+      );
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async consumeMessage(callback) {
+    if (!this.channel) {
+      console.error("No RabbitMQ channel available.");
+      return;
+    }
+
+    try {
+      await this.channel.consume(config.consumeQueueName, async (message) => {
+        try {
+          const content = JSON.parse(message.content.toString());
+          
+          callback(content);
+          
+          this.channel.ack(message);
+        } catch (error) {
+          console.error(error);
+          channel.reject(message, false);
+        }
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  }
+}
+
+module.exports = new OrderMessageBroker();

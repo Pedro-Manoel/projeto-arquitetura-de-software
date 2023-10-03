@@ -54,7 +54,7 @@ services:
       - ecommerce
 
   users-service:
-    build: ./user
+    build: ./users
     ports:
       - "${USERS_SERVICE_PORT}:${USERS_SERVICE_PORT}"
     depends_on:
@@ -74,12 +74,12 @@ services:
     environment:
       - MONGODB_URL=mongodb://users-db:27017
     env_file:
-      - ./user/.env
+      - ./users/.env
     networks:
       - ecommerce
 
   products-service:
-    build: ./product
+    build: ./products
     ports:
       - "${PRODUCTS_SERVICE_PORT}:${PRODUCTS_SERVICE_PORT}"
     depends_on:
@@ -102,12 +102,12 @@ services:
       - MONGODB_URL=mongodb://products-db:27017
       - RABBITMQ_URL=amqp://rabbitmq:5672
     env_file:
-      - ./product/.env
+      - ./products/.env
     networks:
       - ecommerce
 
   orders-service:
-    build: ./order
+    build: ./orders
     ports:
       - "${ORDERS_SERVICE_PORT}:${ORDERS_SERVICE_PORT}"
     depends_on:
@@ -130,7 +130,7 @@ services:
       - MONGODB_URL=mongodb://orders-db:27017
       - RABBITMQ_URL=amqp://rabbitmq:5672
     env_file:
-      - ./order/.env
+      - ./orders/.env
     networks:
       - ecommerce
 

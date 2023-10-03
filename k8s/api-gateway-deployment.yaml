@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  api-gateway-deployment
+spec:
+  selector:
+    matchLabels:
+      app:  api-gateway
+  template:
+    metadata:
+      labels:
+        app:  api-gateway
+    spec:
+      containers:
+      - name:  api-gateway
+        image: api-gateway
+        env:
+        - name: USER_SERVICE_URL
+          value: http://users-service:3001/users
+        - name: PRODUCT_SERVICE_URL
+          value: http://products-service:3002/products
+        - name: ORDER_SERVICE_URL
+          value: http://orders-service:3003/orders
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3004
+      initContainers:
+      - image: busybox
+        name: init-users-service
+        command: ['sh', '-c', "until nslookup users-service.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for users-service; sleep 2; done"]      
+      - image: busybox
+        name: init-products-service
+        command: ['sh', '-c', "until nslookup products-service.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for products-service; sleep 2; done"]      
+      - image: busybox
+        name: init-orders-service
+        command: ['sh', '-c', "until nslookup orders-service.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for orders-service; sleep 2; done"]      
