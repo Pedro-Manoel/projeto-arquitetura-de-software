@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
       - name:  api-gateway
-        image: api-gateway
+        image: api-gateway-service
         env:
         - name: USER_SERVICE_URL
           value: http://users-service:3001/users
