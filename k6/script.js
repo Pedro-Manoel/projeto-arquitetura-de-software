@@ -3,9 +3,9 @@ import { check, sleep } from 'k6';
 
 export const options = {
   stages: [
-    { duration: '10s', target: 20},
-    /*{ duration: '1m30s', target: 10},
-    { duration: '20s', target: 0},*/
+    { duration: '30s', target: 30},
+    { duration: '1m', target: 100},
+    { duration: '1m30s', target: 1000},
   ]
 };
 const url = 'http://localhost:3004/api';
