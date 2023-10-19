@@ -38,4 +38,8 @@ kube-expose-app:
 kube-expose-grafana:
 	kubectl port-forward svc/prom-grafana 3000:80 -n monitoring
 
+fortio-start:
+	kubectl run --image=istio/fortio fortio -- load -qps 2000 -t 30m -c 200 "http://users-service:3001/users/health"
 
+fortio-stop:
+	kubectl delete pod fortio
