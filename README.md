@@ -11,7 +11,7 @@ Realizar uma experimentação em um sistema simples em microsserviços que quand
 ### 🔖 Descrição
 O sistema se trata de um backend simples para uma plataforma de comércio eletrônico. Nele é utilizado o RabbitMQ, um sistema de mensagens, para facilitação da comunicação assíncrona entre alguns microsserviços que compõem a infraestrutura. Além disso, é feito uso do MongoDB como database e o Node.js para a estruturação da API, ao mesmo tempo em que empregam imagens Docker para cada componente do sistema.
 
-O código fonte do sistema foi disponibilizado em um artigo do [Medium](https://medium.com), ele também tem uma descrição detalhada dele, para saber mais clique [aqui](https://medium.com/@nicholasgcc/building-scalable-e-commerce-backend-with-microservices-exploring-design-decisions-node-js-b5228080403b) e o repositório do código fonte pode ser encontrado [aqui](https://github.com/nicholas-gcc/nodejs-ecommerce-microservice).
+O código fonte do sistema foi disponibilizado em um artigo do [Medium](https://medium.com), ele também tem uma descrição detalhada dele, para saber mais clique [aqui](https://medium.com/@nicholasgcc/building-scalable-e-commerce-backend-with-microservices-exploring-design-decisions-node-js-b5228080403b). O repositório do código fonte pode ser encontrado [aqui](https://github.com/nicholas-gcc/nodejs-ecommerce-microservice).
 
 O código fonte do sistema foi modificado para que fosse possível realizar os testes de sobrecarga.
 
@@ -20,23 +20,15 @@ O código fonte do sistema foi modificado para que fosse possível realizar os t
 
 ## 🪄 Experimentação
 
-### Ferramentas
+### Ferramentas utilizadas
 - [Docker](https://www.docker.com/get-started/) - Plataforma para desenvolvimento, deploy e execução de aplicações utilizando containers.
 - [Kubernetes](https://kubernetes.io/) - Sistema de orquestração de containers.
 - [Kind](https://kind.sigs.k8s.io/) - Ferramenta para criação de clusters Kubernetes locais.
 - [Kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) - Ferramenta de linha de comando para interagir com o cluster Kubernetes.
 - [Heml](https://helm.sh/docs/intro/install/) - Gerenciador de pacotes para Kubernetes.
 - [Make](https://www.gnu.org/software/make/) - Ferramenta para automatizar a execução de tarefas.
+- [k6](https://k6.io/) - Ferramenta para testes de carga.
 
-### Preparação do ambiente
-
-1. Primeiramente foi necessário analisar o sistema escolhido e realizar algumas modificações para que fosse possível realizar o teste de sobrecarga.
-
-2. Com o sistema adaptado, foi necessário migrar toda a sua arquitetura para o Kubernetes pois o mesmo é uma ferramenta de orquestração de containers que permite a escalabilidade horizontal de microsserviços, o que é essencial para a realização do teste de sobrecarga.
-
-3. Para facilitar a criação do cluster Kubernetes local foi utilizado o Kind, que é uma ferramenta que cria clusters Kubernetes usando containers Docker como nodes. Além disso, foi utilizado o Helm para gerenciar os pacotes do Kubernetes, o que facilitou a instalação do [kube-prometheus-stack](https://artifacthub.io/packages/helm/prometheus-community/kube-prometheus-stack), que é um pacote que contém o Prometheus, o Grafana e outros componentes necessários para o monitoramento da aplicação.
-
-4. Diante disso, foi criado um Makefile para automatizar a execução de tarefas, como a criação do cluster Kubernetes, a instalação do kube-prometheus-stack, a construção das imagens Docker dos microsserviços, o load das imagens Docker no cluster Kubernetes e o deploy da aplicação.
 
 ### Deploy da aplicação no Kubernetes
 
@@ -45,7 +37,7 @@ O código fonte do sistema foi modificado para que fosse possível realizar os t
     kind create cluster
     ```
 
-2. Configurar o monitoramento da aplicação instalando o kube-prometheus-stack
+2. Configurar o monitoramento da aplicação instalando o [kube-prometheus-stack](https://artifacthub.io/packages/helm/prometheus-community/kube-prometheus-stack):
     ```bash
     make add-prometheus-stack
     ```
@@ -65,7 +57,7 @@ O código fonte do sistema foi modificado para que fosse possível realizar os t
     make kube-up
     ```
 
-6. Verificar se a aplicação e o monitoramento estão funcionando corretamente, todos os serviços devem estar com o status "Running":
+6. Verificar se a aplicação e o monitoramento estão funcionando corretamente, todos os serviços devem estar com o status `Running`:
     6.1 Verificando aplicação
     ```bash
     kubectl get pods
@@ -75,15 +67,53 @@ O código fonte do sistema foi modificado para que fosse possível realizar os t
     kubectl get pods -n monitoring
     ```
 
-7. Expor o api-gateway para acesso externo:
+### Preparação do teste de carga
+
+1. Levantar o ambiente para a execução:
+    ```bash
+    make k6-up
+    ```
+
+### Realizar o experimento
+1. Expor o api-gateway para acesso externo:
     ```bash
     make kube-expose-app
     ```
 
-8. Expor o Grafana para acesso externo:
+2. Expor o Grafana do Kubernetes para acesso externo:
     ```bash
     make kube-expose-grafana
     ```
+
+3. Importar o dashboard do Kubernetes no grafana:
+    2.1 Acessar o [grafana do Kubernetes](http://localhost:3000)
+    2.2 Importar o dashboard [Kubernetes Horizontal Pod Autoscaler](./grafana/dashboards/Kubernetes_Horizontal_Pod_Autoscaler.json)
+
+
+4. Importar o dashboard do K6 no grafana:
+    4.1 Acessar o [grafana do K6](http://localhost:3001)
+    4.1 Configurar a conexão com o InfluxDB:
+        * URL: `http://influxdb:8086`
+        * Database: `k6`
+    4.2 Importar o dashboard [k6 Load Testing Results](./grafana/dashboards/k6_Load_Testing_Results.json)
+        
+
+5. Iniciar o teste de carga:
+    ```bash
+    make k6-run
+    ```
+6. Acompanhar o dashboard do K6 e do Kubernetes para verificar o comportamento da aplicação e os resultados do teste.
+
+7. Ao finalizar o teste de carga devemos:
+    7.1 Derrubar o ambiente de execução do K6:
+    ```bash
+    make k6-down
+    ```
+    7.2 Derrubar o ambiente de execução da aplicação:
+    ```bash
+    make kube-down
+    ```
+
 
 
 

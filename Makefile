@@ -43,3 +43,12 @@ fortio-start:
 
 fortio-stop:
 	kubectl delete pod fortio
+
+k6-up:
+	docker compose -f ./k6/docker-compose.yml up -d 
+
+k6-down:
+	docker compose -f ./k6/docker-compose.yml down -v
+
+k6-run:
+	k6 run k6\script.js --out influxdb=http://localhost:8086/k6
