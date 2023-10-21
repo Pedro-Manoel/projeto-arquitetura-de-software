@@ -33,7 +33,7 @@ kube-down:
 	kubectl delete -f k8s
 
 kube-expose-app:
-		kubectl port-forward svc/api-gateway-service 3004:3004
+	while true; do kubectl port-forward svc/api-gateway-service 3004:3004; done;
 
 kube-expose-grafana:
 	kubectl port-forward svc/prom-grafana 3000:80 -n monitoring
@@ -51,4 +51,4 @@ k6-down:
 	docker compose -f ./k6/docker-compose.yml down -v
 
 k6-run:
-	k6 run k6\script.js --out influxdb=http://localhost:8086/k6
+	k6 run k6/script.js --out influxdb=http://localhost:8086/k6

@@ -2,12 +2,31 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 
 export const options = {
-  stages: [
-    { duration: '30s', target: 30},
-    { duration: '1m', target: 100},
-    { duration: '1m30s', target: 1000},
-  ]
+  scenarios: {
+    users_test: {
+      executor: 'constant-vus',
+      exec: 'user_info',
+      vus: 10,
+      duration: '5m30s'
+    },
+    orders_test: {
+      executor: 'constant-vus',
+      exec: 'list_orders',
+      vus: 15,
+      duration: '5m30s'
+    },
+    products_test: {
+      executor: 'ramping-vus',
+      exec: 'list_products',
+      stages: [
+        { duration: '1m', target: 30},
+        { duration: '2m', target: 100},
+        { duration: '2m', target: 400},
+      ],
+    }
+  },
 };
+
 const url = 'http://localhost:3004/api';
 const payload = JSON.stringify({
   username: 'k6',
@@ -43,7 +62,8 @@ export function setup() {
   authParams['headers']['Authorization'] = `Bearer ${token}`;
 
   const products = http.get(`${url}/products`, authParams);
-  const falta = 10-products.json().length;
+  const QTD_PRODUTOS = 100;
+  const falta = QTD_PRODUTOS-products.json().length;
 
   for(let i = 0; i < falta; i++) {
     const res2 = http.post(`${url}/products`, JSON.stringify(product), authParams);
@@ -53,19 +73,36 @@ export function setup() {
   }
   const products2 = http.get(`${url}/products`, authParams);
   check(products2, {
-    'at least one product': (r) => r.json().length > 0
-  })
+    'at least 15 products': (r) => r.json().length >= QTD_PRODUTOS
+  });
   return {token: token, product_id: products2.json()[0]._id};
 }
 
-export default function (data) {
+// CONSTANT LOAD
+export function user_info(data) {
   authParams['headers']['Authorization'] = `Bearer ${data['token']}`;
-  const buy_res = http.post(`${url}/products/buy`, JSON.stringify({
-    ids: [data['product_id']]
-  }), authParams);
-  check(buy_res, {
-    'buy - status is 201': (r) => r.status === 201,
-    'buy is completed': (r) => r.json().status === "completed",
+  const users = http.get(`${url}/users`, authParams);
+  check(users, {
+    'GET /users is 200': (r) => r.status === 200
+  });
+  sleep(1);
+}
+
+// CONSTANT LOAD
+export function list_orders(data) {
+  authParams['headers']['Authorization'] = `Bearer ${data['token']}`;
+  const orders = http.get(`${url}/orders`, authParams);
+  check(orders, {
+    'GET /orders is 200': (r) => r.status === 200
+  });
+  sleep(1);
+}
+
+export function list_products(data) {
+  authParams['headers']['Authorization'] = `Bearer ${data['token']}`;
+  const products2 = http.get(`${url}/products`, authParams);
+  check(products2, {
+    'GET 15 products': (r) => r.json().length >= 15
   })
   sleep(1);
 }

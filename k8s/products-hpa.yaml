@@ -8,7 +8,7 @@ spec:
     kind: Deployment
     name: products-service-deployment
   minReplicas: 1
-  maxReplicas: 8
+  maxReplicas: 1
   metrics:
   - type: Resource
     resource:
@@ -16,3 +16,9 @@ spec:
       target:
         type: Utilization
         averageUtilization: 40
+  behavior:
+    scaleDown:
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60

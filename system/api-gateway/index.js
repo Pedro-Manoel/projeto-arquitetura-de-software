@@ -37,3 +37,11 @@ app.use("/api/orders", (req, res) => {
 app.listen(config.port, () => {
   console.log(`API Gateway on port ${config.port}`);
 });
+
+proxy.on('error', function (err, req, res) {
+  res.writeHead(500, {
+    'Content-Type': 'text/plain'
+  });
+
+  res.end('Something went wrong. And we are reporting a custom error message.');
+});
