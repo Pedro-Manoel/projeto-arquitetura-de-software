@@ -36,32 +36,29 @@ O código fonte do sistema foi modificado para que fosse possível realizar os t
     ```bash
     kind create cluster
     ```
-
 2. Configurar o monitoramento da aplicação instalando o [kube-prometheus-stack](https://artifacthub.io/packages/helm/prometheus-community/kube-prometheus-stack):
     ```bash
     make add-prometheus-stack
     ```
-
 3. Construir as imagens Docker dos microsserviços:
     ```bash
     make docker-build-all
     ```
-
 4. Fazer o load das imagens Docker no cluster Kubernetes (Processo demorado):
     ```bash
     make kind-load-docker-images
     ```
-
 5. Realizar o deploy da aplicação:
     ```bash
     make kube-up
     ```
-
 6. Verificar se a aplicação e o monitoramento estão funcionando corretamente, todos os serviços devem estar com o status `Running`:
-    6.1 Verificando aplicação
+
+   6.1 Verificando aplicação
     ```bash
     kubectl get pods
     ```
+
     6.2 Verificando o monitoramento
     ```bash
     kubectl get pods -n monitoring
@@ -79,36 +76,40 @@ O código fonte do sistema foi modificado para que fosse possível realizar os t
     ```bash
     make kube-expose-app
     ```
-
 2. Expor o Grafana do Kubernetes para acesso externo:
     ```bash
     make kube-expose-grafana
     ```
 
 3. Importar o dashboard do Kubernetes no grafana:
-    2.1 Acessar o [grafana do Kubernetes](http://localhost:3000)
-    2.2 Importar o dashboard [Kubernetes Horizontal Pod Autoscaler](./grafana/dashboards/Kubernetes_Horizontal_Pod_Autoscaler.json)
 
+    3.1 Acessar o [grafana do Kubernetes](http://localhost:3000)
+
+    3.2 Importar o dashboard [Kubernetes Horizontal Pod Autoscaler](./grafana/dashboards/Kubernetes_Horizontal_Pod_Autoscaler.json)
 
 4. Importar o dashboard do K6 no grafana:
+
     4.1 Acessar o [grafana do K6](http://localhost:3001)
+
     4.1 Configurar a conexão com o InfluxDB:
-        * URL: `http://influxdb:8086`
-        * Database: `k6`
+   * URL: `http://influxdb:8086`
+   * Database: `k6`
+
     4.2 Importar o dashboard [k6 Load Testing Results](./grafana/dashboards/k6_Load_Testing_Results.json)
         
-
-5. Iniciar o teste de carga:
+6. Iniciar o teste de carga:
     ```bash
     make k6-run
     ```
-6. Acompanhar o dashboard do K6 e do Kubernetes para verificar o comportamento da aplicação e os resultados do teste.
+7. Acompanhar o dashboard do K6 e do Kubernetes para verificar o comportamento da aplicação e os resultados do teste.
 
-7. Ao finalizar o teste de carga devemos:
+8. Ao finalizar o teste de carga devemos:
+
     7.1 Derrubar o ambiente de execução do K6:
     ```bash
     make k6-down
     ```
+
     7.2 Derrubar o ambiente de execução da aplicação:
     ```bash
     make kube-down
