@@ -4,23 +4,27 @@
 
 ## 📝 Objetivo
 
-Realizar uma experimentação em um sistema simples em microsserviços que quando submetido a uma carga muito grande em um (ou mais) desses microsserviços replica-os e resolve o problema.
+Este projeto tem como objetivo realizar uma experimentação em um sistema simples em microsserviços. O sistema replica os microsserviços quando submetido a uma carga muito grande, resolvendo assim o problema.
 
 ## ⚙️ Sistema
 
 ### 🔖 Descrição
-O sistema se trata de um backend simples para uma plataforma de comércio eletrônico. Nele é utilizado o RabbitMQ, um sistema de mensagens, para facilitação da comunicação assíncrona entre alguns microsserviços que compõem a infraestrutura. Além disso, é feito uso do MongoDB como database e o Node.js para a estruturação da API, ao mesmo tempo em que empregam imagens Docker para cada componente do sistema.
 
-O código fonte do sistema foi disponibilizado em um artigo do [Medium](https://medium.com), ele também tem uma descrição detalhada dele, para saber mais clique [aqui](https://medium.com/@nicholasgcc/building-scalable-e-commerce-backend-with-microservices-exploring-design-decisions-node-js-b5228080403b). O repositório do código fonte pode ser encontrado [aqui](https://github.com/nicholas-gcc/nodejs-ecommerce-microservice).
+O sistema é um backend para e-commerce com API em Node.js, organizado em microsserviços encapsulados em containers Docker. Segue os princípios da Clean Architecture, com um proxy server direcionando as solicitações. Utiliza MongoDB para gestão de dados, com modelos definidos pelo Mongoose. A comunicação entre certos microsserviços é feita através do RabbitMQ e do protocolo AMQP.
 
-O código fonte do sistema foi modificado para que fosse possível realizar os testes de sobrecarga.
+O código fonte deste sistema, que foi modificado para a realização do experimento, está disponível em um artigo detalhado no [Medium](https://medium.com/@nicholasgcc/building-scalable-e-commerce-backend-with-microservices-exploring-design-decisions-node-js-b5228080403b). Para uma compreensão mais profunda do projeto e das modificações realizadas, recomendamos a leitura deste artigo. O repositório completo do código fonte pode ser acessado [aqui](https://github.com/nicholas-gcc/nodejs-ecommerce-microservice).
 
 ### 📦 Arquitetura
+A arquitetura do sistema é apresentada abaixo:
+
 ![Arquitetura no Docker](/.github/assets/images/docker_architecture.png)
 
-## 🪄 Experimentação
+## 🪄 Experimento
 
-### Ferramentas utilizadas
+### 🛠️ Ferramentas utilizadas
+
+O experimento envolveu a utilização de várias ferramentas:
+
 - [Docker](https://www.docker.com/get-started/) - Plataforma para desenvolvimento, deploy e execução de aplicações utilizando containers.
 - [Kubernetes](https://kubernetes.io/) - Sistema de orquestração de containers.
 - [Kind](https://kind.sigs.k8s.io/) - Ferramenta para criação de clusters Kubernetes locais.
@@ -29,8 +33,26 @@ O código fonte do sistema foi modificado para que fosse possível realizar os t
 - [Make](https://www.gnu.org/software/make/) - Ferramenta para automatizar a execução de tarefas.
 - [k6](https://k6.io/) - Ferramenta para testes de carga.
 
+### ⚖️ Migração da aplicação para o Kubernetes
 
-### Deploy da aplicação no Kubernetes
+ A migração completa da arquitetura do projeto, originalmente implementada no Docker, para o Kubernetes foi necessária. O Kubernetes oferece recursos avançados como Autoscaling e Load Balancer. Essas funcionalidades foram fundamentais para a decisão de migração.
+
+#### 📦 Arquitetura Completa
+
+A arquitetura completa oferece uma visão detalhada de todos os componentes e como eles interagem entre si.
+
+![Arquitetura completa no Kubernetes](./.github/assets/images/k8s_complete_architecture.png)
+
+#### 📦 Arquitetura Simplificada
+
+A arquitetura simplificada fornece uma visão geral do sistema, focando nos componentes principais.
+
+![Arquitetura simplificada no Kubernetes](./.github/assets/images/k8s_simplified_architecture.png)
+
+
+### 🚀 Deploy da aplicação no Kubernetes
+
+Para realizar o deploy da aplicação no Kubernetes, siga os passos abaixo:
 
 1. Criar o cluster Kubernetes local:
     ```bash
@@ -52,7 +74,7 @@ O código fonte do sistema foi modificado para que fosse possível realizar os t
     ```bash
     make kube-up
     ```
-6. Verificar se a aplicação e o monitoramento estão funcionando corretamente, todos os serviços devem estar com o status `Running`:
+6. Verificar se a aplicação e o monitoramento estão funcionando corretamente. Todos os serviços devem estar com o status `Running`:
 
    6.1 Verificando aplicação
     ```bash
@@ -64,18 +86,19 @@ O código fonte do sistema foi modificado para que fosse possível realizar os t
     kubectl get pods -n monitoring
     ```
 
-### Preparação do teste de carga
+### ✅ Preparação do teste de carga
 
 1. Levantar o ambiente para a execução:
     ```bash
     make k6-up
     ```
 
-### Realizar o experimento
+### ⚠️ Realizar o experimento
 1. Expor o api-gateway para acesso externo:
     ```bash
     make kube-expose-app
     ```
+
 2. Expor o Grafana do Kubernetes para acesso externo:
     ```bash
     make kube-expose-grafana

@@ -8,14 +8,14 @@ spec:
     kind: Deployment
     name: products-service-deployment
   minReplicas: 1
-  maxReplicas: 1
+  maxReplicas: 10
   metrics:
   - type: Resource
     resource:
       name: cpu
       target:
         type: Utilization
-        averageUtilization: 40
+        averageUtilization: 70
   behavior:
     scaleDown:
       policies:

@@ -23,9 +23,6 @@ remove-prometheus-stack:
 	helm uninstall prom -n monitoring
 	kubectl delete namespace monitoring	
 
-kube-pods-monitoring:
-	kubectl get pods -n monitoring
-
 kube-up:
 	kubectl apply -f k8s
 
@@ -33,16 +30,10 @@ kube-down:
 	kubectl delete -f k8s
 
 kube-expose-app:
-	while true; do kubectl port-forward svc/api-gateway-service 3004:3004; done;
+	kubectl port-forward svc/api-gateway-service 3004:3004
 
 kube-expose-grafana:
 	kubectl port-forward svc/prom-grafana 3000:80 -n monitoring
-
-fortio-start:
-	kubectl run --image=istio/fortio fortio -- load -qps 2000 -t 30m -c 200 "http://users-service:3001/users/health"
-
-fortio-stop:
-	kubectl delete pod fortio
 
 k6-up:
 	docker compose -f ./k6/docker-compose.yml up -d 

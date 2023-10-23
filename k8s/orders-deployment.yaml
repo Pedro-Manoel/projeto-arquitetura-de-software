@@ -21,11 +21,11 @@ spec:
           value: amqp://rabbitmq-service:5672
         resources:
           requests:
-            memory: "128Mi"
-            cpu: "100m"
+            memory: "64Mi"
+            cpu: "250m"
           limits:
             memory: "256Mi"
-            cpu: "200m"
+            cpu: "500m"
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 3003

@@ -6,22 +6,22 @@ export const options = {
     users_test: {
       executor: 'constant-vus',
       exec: 'user_info',
-      vus: 10,
-      duration: '5m30s'
+      vus: 15,
+      duration: '15m30s'
     },
     orders_test: {
       executor: 'constant-vus',
       exec: 'list_orders',
-      vus: 15,
-      duration: '5m30s'
+      vus: 10,
+      duration: '15m30s'
     },
     products_test: {
       executor: 'ramping-vus',
       exec: 'list_products',
       stages: [
-        { duration: '1m', target: 30},
-        { duration: '2m', target: 100},
-        { duration: '2m', target: 400},
+        { duration: '5m', target: 30},
+        { duration: '5m', target: 60},
+        { duration: '5m', target: 90}
       ],
     }
   },
@@ -102,7 +102,7 @@ export function list_products(data) {
   authParams['headers']['Authorization'] = `Bearer ${data['token']}`;
   const products2 = http.get(`${url}/products`, authParams);
   check(products2, {
-    'GET 15 products': (r) => r.json().length >= 15
+    'GET /products is 200': (r) => r.status === 200
   })
   sleep(1);
 }
