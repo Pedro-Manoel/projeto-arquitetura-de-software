@@ -43,13 +43,13 @@ O experimento envolveu a utilização de várias ferramentas:
 
  A migração completa da arquitetura do projeto, originalmente implementada no Docker, para o Kubernetes foi necessária. O Kubernetes oferece recursos avançados como Autoscaling e Load Balancer. Essas funcionalidades foram fundamentais para a decisão de migração.
 
-#### 📦 Arquitetura Completa
+### 📦 Arquitetura Completa
 
 A arquitetura completa oferece uma visão detalhada de todos os componentes e como eles interagem entre si.
 
 ![Arquitetura completa no Kubernetes](./.github/assets/images/k8s_complete_architecture.png)
 
-#### 📦 Arquitetura Simplificada
+### 📦 Arquitetura Simplificada
 
 A arquitetura simplificada fornece uma visão geral do sistema, focando nos componentes principais.
 
