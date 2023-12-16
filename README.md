@@ -170,7 +170,7 @@ Para realizar o deploy da aplicação no Kubernetes, siga os passos abaixo:
     make kube-down
     ```
 
-## 🪄 Resultados
+## 🪄 Resultados no Grafana
 
 ### ❌ Sem Autoscaling
 
@@ -190,7 +190,7 @@ Para realizar o deploy da aplicação no Kubernetes, siga os passos abaixo:
 
 ![Resultados K6](./.github/assets/images/test_result/no_autoscaling/K6.png)
 
-#### ✅ Com Autoscaling
+### ✅ Com Autoscaling
 
 >Microsserviço de Usuários
 
@@ -208,7 +208,21 @@ Para realizar o deploy da aplicação no Kubernetes, siga os passos abaixo:
 
 ![Resultados K6](./.github/assets/images/test_result/with_autoscaling/K6.png)
 
+## 🔍 Análise
 
+### ❌ Sem Autoscaling
+- A utilização de CPU para os microsserviços de usuários e ordens de compras se manteve relativamente constante entre 40%-60% e 20%-40%, respectivamente.
+- Para o microsserviço de produtos, a utilização de CPU cresceu até 200% com a carga crescente.
+- No K6, a maioria das requisições foi bem-sucedida com uma taxa de falha de 0,00%. A média da duração da requisição foi de 222,18 ms.
+
+### ✅ Com Autoscaling
+- A utilização de CPU para os microsserviços de usuários e ordens de compras se manteve relativamente constante entre 40%-50% e 20%-40%, respectivamente.
+- Para o microsserviço de produtos, a utilização de CPU cresceu até 92% com a carga crescente, depois se manteve constante entre 50% e 70%.
+- Durante o teste, apenas 5 de 10 réplicas máximas foram provisionadas, permitindo um uso de CPU variável entre 50% e 70%.
+- No K6, todas as requisições foram bem-sucedidas com uma taxa de falha de 0,90%. A média da duração da requisição foi de 125,60 ms.
+
+## ❇️ Conclusão
+Os resultados indicam que o autoscaling foi eficaz em manter a utilização da CPU na média desejada e resolver o problema de sobrecarga do sistema. Isso é evidenciado pela redução na utilização máxima da CPU no microsserviço de produtos de 200% para 92%. Além disso, a duração média da requisição diminuiu de 222,18 ms para 125,60 ms com o autoscaling, indicando uma melhoria no desempenho. No entanto, houve um ligeiro aumento na taxa de falha das requisições de 0,00% para 0,90% com o autoscaling. Isso pode ser um ponto a ser investigado para futuras otimizações. Em geral, o autoscaling parece ter contribuído positivamente para a gestão da carga e o desempenho do sistema.
 
 
 
